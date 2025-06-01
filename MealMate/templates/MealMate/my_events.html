@@ -1,0 +1,165 @@
+{% extends 'MealMate/base.html' %}
+
+{% block title %}MealMate - My Events{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto">
+    <div class="bg-white shadow rounded-lg p-6">
+        <h1 class="text-2xl font-bold text-gray-900 mb-6">My Events</h1>
+
+        <!-- Tabs -->
+        <div class="border-b border-gray-200">
+            <nav class="-mb-px flex space-x-8" aria-label="Tabs">
+                <button onclick="showTab('hosted')" 
+                        class="tab-button border-indigo-500 text-indigo-600 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm"
+                        id="hosted-tab">
+                    Events I'm Hosting
+                </button>
+                <button onclick="showTab('joined')" 
+                        class="tab-button border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm"
+                        id="joined-tab">
+                    Events I've Joined
+                </button>
+            </nav>
+        </div>
+
+        <!-- Hosted Events -->
+        <div id="hosted-events" class="mt-6">
+            {% if hosted_events %}
+                <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                    {% for event in hosted_events %}
+                        <div class="bg-white border rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200">
+                            <div class="p-6">
+                                <div class="flex items-center justify-between">
+                                    <h3 class="text-lg font-medium text-gray-900">
+                                        <a href="{% url 'event_detail' event.id %}" class="hover:text-indigo-600">
+                                            {{ event.title }}
+                                        </a>
+                                    </h3>
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
+                                        Host
+                                    </span>
+                                </div>
+                                <div class="mt-2 space-y-2">
+                                    <p class="text-sm text-gray-500">
+                                        <i class="fas fa-calendar-alt mr-2"></i>{{ event.date_time|date:"F j, Y, g:i a" }}
+                                    </p>
+                                    <p class="text-sm text-gray-500">
+                                        <i class="fas fa-map-marker-alt mr-2"></i>{{ event.location }}
+                                    </p>
+                                    <p class="text-sm text-gray-500">
+                                        <i class="fas fa-users mr-2"></i>{{ event.participants.count }}/{{ event.max_participants }} participants
+                                    </p>
+                                </div>
+                                <div class="mt-4 flex justify-between items-center">
+                                    <span class="text-sm text-gray-500">
+                                        Created {{ event.created_at|date:"M j, Y" }}
+                                    </span>
+                                    <div class="flex space-x-2">
+                                        <a href="{% url 'edit_event' event.id %}" 
+                                           class="text-sm text-indigo-600 hover:text-indigo-900">
+                                            Edit
+                                        </a>
+                                        <a href="{% url 'delete_event' event.id %}" 
+                                           class="text-sm text-red-600 hover:text-red-900">
+                                            Delete
+                                        </a>
+     
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="text-center py-12">
+                    <p class="text-gray-500">You haven't created any events yet.</p>
+                    <a href="{% url 'create_event' %}" 
+                       class="mt-4 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700">
+                        Create Your First Event
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Joined Events -->
+        <div id="joined-events" class="mt-6 hidden">
+            {% if joined_events %}
+                <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                    {% for event in joined_events %}
+                        <div class="bg-white border rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200">
+                            <div class="p-6">
+                                <div class="flex items-center justify-between">
+                                    <h3 class="text-lg font-medium text-gray-900">
+                                        <a href="{% url 'event_detail' event.id %}" class="hover:text-indigo-600">
+                                            {{ event.title }}
+                                        </a>
+                                    </h3>
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                        Joined
+                                    </span>
+                                </div>
+                                <div class="mt-2 space-y-2">
+                                    <p class="text-sm text-gray-500">
+                                        <i class="fas fa-calendar-alt mr-2"></i>{{ event.date_time|date:"F j, Y, g:i a" }}
+                                    </p>
+                                    <p class="text-sm text-gray-500">
+                                        <i class="fas fa-map-marker-alt mr-2"></i>{{ event.location }}
+                                    </p>
+                                    <p class="text-sm text-gray-500">
+                                        <i class="fas fa-users mr-2"></i>{{ event.participants.count }}/{{ event.max_participants }} participants
+                                    </p>
+                                </div>
+                                <div class="mt-4 flex justify-between items-center">
+                                    <span class="text-sm text-gray-500">
+                                        Hosted by {{ event.host.username }}
+                                    </span>
+                                    <a href="{% url 'leave_event' event.id %}" 
+                                       class="text-sm text-red-600 hover:text-red-900">
+                                        Leave Event
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="text-center py-12">
+                    <p class="text-gray-500">You haven't joined any events yet.</p>
+                    <a href="{% url 'home' %}" 
+                       class="mt-4 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700">
+                        Browse Events
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function showTab(tabName) {
+        // Hide all content
+        document.getElementById('hosted-events').classList.add('hidden');
+        document.getElementById('joined-events').classList.add('hidden');
+        
+        // Remove active styles from all tabs
+        document.querySelectorAll('.tab-button').forEach(button => {
+            button.classList.remove('border-indigo-500', 'text-indigo-600');
+            button.classList.add('border-transparent', 'text-gray-500');
+        });
+        
+        // Show selected content
+        if (tabName === 'hosted') {
+            document.getElementById('hosted-events').classList.remove('hidden');
+            document.getElementById('hosted-tab').classList.remove('border-transparent', 'text-gray-500');
+            document.getElementById('hosted-tab').classList.add('border-indigo-500', 'text-indigo-600');
+        } else {
+            document.getElementById('joined-events').classList.remove('hidden');
+            document.getElementById('joined-tab').classList.remove('border-transparent', 'text-gray-500');
+            document.getElementById('joined-tab').classList.add('border-indigo-500', 'text-indigo-600');
+        }
+    }
+</script>
+{% endblock %} 

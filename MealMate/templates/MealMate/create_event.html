@@ -1,0 +1,166 @@
+{% extends 'MealMate/base.html' %}
+
+{% block title %}
+    MealMate - {% if edit %}Edit Event{% else %}Create a new event{% endif %}
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    #map {
+        height: 400px;
+        width: 100%;
+        border-radius: 0.5rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto">
+    <div class="bg-white shadow rounded-lg p-6">
+        <h1 class="text-2xl font-bold text-gray-900 mb-6">
+            {% if edit %}Edit my event{% else %}Create a new event{% endif %}
+        </h1>
+
+
+        <form method="post" class="space-y-6">
+            {% csrf_token %}
+            {% if form.non_field_errors %}
+            <div class="text-red-500 text-sm mb-4">
+                {% for error in form.non_field_errors %}
+                <p>{{ error }}</p>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <!-- Title -->
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Title</label>
+                {{ form.title }}
+                {{ form.title.errors }}
+            </div>
+
+            <!-- Time and date -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Date</label>
+                    {{ form.date }}
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Time</label>
+                    {{ form.time }}
+                    {% if form.time.errors %}
+                        <p class="text-red-500 text-sm mt-1">{{ form.time.errors|striptags }}</p>
+                    {% endif %}
+                </div>
+            </div>
+
+
+
+              
+              <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700">Location</label>
+                {{ form.location }}
+                {{ form.location.errors }}
+            </div>
+            
+            {{ form.latitude }}
+            {{ form.longitude }}
+            
+              
+
+            <!-- Limit of participants -->
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Limitation of Participants</label>
+                {{ form.max_participants }}
+                {% if form.max_participants.errors %}
+                    <p class="text-red-500 text-sm mt-1">{{ form.max_participants.errors|striptags }}</p>
+                {% endif %}
+            </div>
+
+            <!-- Des -->
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Description</label>
+                {{ form.description }}
+                {{ form.description.errors }}
+            </div>
+
+            <!-- privacy -->
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Private</label>
+                {{ form.privacy }}
+                {{ form.privacy.errors }}
+            </div>
+
+            
+             
+            <div id="map" style="height: 300px; border-radius: 0.5rem;" class="my-4"></div>
+
+            
+            <input type="hidden" id="latitude" name="latitude">
+            <input type="hidden" id="longitude" name="longitude">
+
+
+            <!-- submit -->
+            <div class="flex justify-end space-x-4">
+                <a href="{% url 'home' %}" 
+                   class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                    Cancel
+                </a>
+                <button type="submit" 
+                        class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700">
+                    {% if edit %}Save{% else %}Create{% endif %}
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+    let map, marker, autocomplete;
+
+    function initMap() {
+        const defaultLocation = { lat: 40.4433, lng: -79.9436 };  
+        map = new google.maps.Map(document.getElementById("map"), {
+            center: defaultLocation,
+            zoom: 14,
+        });
+
+        marker = new google.maps.Marker({
+            position: defaultLocation,
+            map: map,
+            draggable: false  
+        });
+
+        autocomplete = new google.maps.places.Autocomplete(
+            document.getElementById("autocomplete"),
+            { types: ["geocode"] }
+        );
+
+        autocomplete.addListener("place_changed", function () {
+            const place = autocomplete.getPlace();
+            if (!place.geometry) {
+                alert("No details available for input: '" + place.name + "'");
+                return;
+            }
+
+            const lat = place.geometry.location.lat();
+            const lng = place.geometry.location.lng();
+
+            // Update new value 
+            document.getElementById("latitude").value = lat;
+            document.getElementById("longitude").value = lng;
+
+            const location = { lat, lng };
+            map.setCenter(location);
+            marker.setPosition(location);
+        });
+    }
+</script>
+
+
+<script async defer
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAIxp-NnJfKKoP77v_wVrjnYcljHRiSsmw&libraries=places&callback=initMap">
+</script>
+{% endblock %}
+

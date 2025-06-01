@@ -1,0 +1,46 @@
+{% extends 'MealMate/base.html' %}
+
+{% block title %}Create Bill - {{ event.title }}{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto bg-white shadow rounded-lg p-6 mt-6">
+    <h2 class="text-2xl font-bold text-gray-900 mb-4">Split Bill for: {{ event.title }}</h2>
+
+    <form method="post">
+        {% csrf_token %}
+        
+        {% if form.non_field_errors %}
+            <div class="text-red-600 mb-4">
+                {{ form.non_field_errors }}
+            </div>
+        {% endif %}
+
+        <!-- Total Amount -->
+        <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700">Total Amount ($)</label>
+            {{ form.total_amount }}
+            {% if form.total_amount.errors %}
+                <div class="text-red-600 text-sm mt-1">
+                    {% for error in form.total_amount.errors %}
+                        {{ error }}
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Is Split Equally -->
+        <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700">Split Method</label>
+            {{ form.is_split_equally }}
+            <p class="text-sm text-gray-500 mt-1">Currently only "split equally" is supported.</p>
+        </div>
+
+        <!-- Submit -->
+        <div class="flex justify-end">
+            <button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700">
+                Split Bill
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}

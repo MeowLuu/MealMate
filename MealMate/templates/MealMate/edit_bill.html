@@ -1,0 +1,33 @@
+{% extends 'MealMate/base.html' %}
+
+{% block content %}
+<div class="max-w-xl mx-auto bg-white shadow p-6 rounded">
+    <h2 class="text-2xl font-bold mb-4">Edit Bill for {{ event.title }}</h2>
+    
+    <form method="post">
+        {% csrf_token %}
+        
+        {% if form.non_field_errors %}
+            <div class="text-red-600 mb-4">
+                {{ form.non_field_errors }}
+            </div>
+        {% endif %}
+
+        <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700">New Total Amount</label>
+            {{ form.total_amount }}
+            {% if form.total_amount.errors %}
+                <div class="text-red-600 text-sm mt-1">
+                    {% for error in form.total_amount.errors %}
+                        {{ error }}
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div>
+
+        <button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700">
+            Update Bill
+        </button>
+    </form>
+</div>
+{% endblock %}

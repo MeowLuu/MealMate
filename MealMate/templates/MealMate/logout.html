@@ -1,0 +1,14 @@
+{% extends 'MealMate/base.html' %}
+
+{% block title %}Logged Out{% endblock %}
+
+{% block content %}
+<div class="max-w-xl mx-auto text-center bg-white p-8 rounded shadow">
+    <h1 class="text-3xl font-bold text-gray-800 mb-4">You’ve successfully logged out</h1>
+    <p class="text-gray-600 mb-6">See you next time on MealMate 👋</p>
+    <a href="{% url 'home' %}" 
+       class="inline-block px-6 py-2 text-white bg-indigo-600 hover:bg-indigo-700 rounded-md text-sm font-medium">
+        Back to Home
+    </a>
+</div>
+{% endblock %}

@@ -1,0 +1,316 @@
+{% extends 'MealMate/base.html' %}
+
+{% block title %}MealMate - {{ event.title }}{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto">
+    <!-- Event Header -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <div class="bg-white shadow rounded-lg p-6 mb-6">
+        <div class="flex justify-between items-start">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900">{{ event.title }}</h1>
+                <div class="mt-2 flex items-center text-sm text-gray-500">
+                    <i class="fas fa-calendar-alt mr-2"></i>
+                    {{ event.date_time|date:"F j, Y, g:i a" }}
+                </div>
+                <div class="mt-1 flex items-center text-sm text-gray-500">
+                    <i class="fas fa-map-marker-alt mr-2"></i>
+                    {{ event.location }}
+                </div>
+                <div class="mt-1 flex items-center text-sm text-gray-500">
+                    <i class="fas fa-users mr-2"></i>
+                    {{ event.participants.count }}/{{ event.max_participants }} participants
+                </div>
+            </div>
+            <div class="flex space-x-4">
+                {% if user == event.host %}
+                    <a href="{% url 'edit_event' event.id %}" 
+                       class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                        Edit Event
+                    </a>
+                    <a href="{% url 'delete_event' event.id %}" 
+                       class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700"
+                       onclick="return confirm('Are you sure you want to delete this event? This operation cannot be undone.');">
+                       <i class="fas fa-trash-alt mr-2"></i> Delete Event
+                    </a>
+                {% else %}
+                    {% if user in event.participants.all %}
+                        <a href="{% url 'leave_event' event.id %}" 
+                           class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700">
+                            Leave Event
+                        </a>
+                    {% elif event.privacy == 'public' and event.participants.all.count < event.max_participants %}
+                        <a href="{% url 'join_event' event.id %}" 
+                           class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700">
+                            Join Event
+                        </a>
+                    {% endif %}
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <!-- Main Content -->
+        <div class="md:col-span-2 space-y-6">
+            <!-- Location (no map) -->
+            <div class="bg-white shadow rounded-lg p-6">
+                <h2 class="text-xl font-semibold text-gray-900 mb-4">Location</h2>
+                <p class="text-gray-600">{{ event.location }}</p>
+            </div>
+
+            <!-- Description -->
+            <div class="bg-white shadow rounded-lg p-6">
+                <h2 class="text-xl font-semibold text-gray-900 mb-4">Description</h2>
+                <p class="text-gray-600">{{ event.description }}</p>
+            </div>
+
+                <!-- Bill Details -->
+                {% if is_participant or is_host %}
+                
+                <div class="bg-white shadow rounded-lg p-6 mb-6">
+                    <h2 class="text-xl font-semibold text-gray-900 mb-4">Bill Summary</h2>
+                    {% if event.bill %}
+                        <p class="text-sm text-gray-700 mb-2">Total Amount: <strong>${{ event.bill.total_amount }}</strong></p>
+                        <p class="text-sm text-gray-500 mb-4">Split Equally: ({{ event.participants.count }} people)</p>
+            
+                        <table class="min-w-full text-sm">
+                            <thead class="border-b font-medium">
+                                <tr>
+                                    <th class="py-2 text-left">User</th>
+                                    <th class="py-2 text-left">Amount</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for payment in event.bill.payment_set.all %}
+                                    <tr class="border-t">
+                                        <td class="py-2">{{ payment.user.username }}</td>
+                                        <td class="py-2">${{ payment.amount }}</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+            
+                        {% if is_host %}
+                            <div class="mt-4">
+                                <a href="{% url 'edit_bill' event.id %}" 
+                                   class="inline-flex items-center px-4 py-2 border border-indigo-600 text-sm font-medium rounded-md text-indigo-700 bg-indigo-50 hover:bg-indigo-100 shadow-sm">
+                                    <i class="fas fa-sliders-h mr-2"></i> Edit Bill
+                                </a>
+                            </div>
+                        {% endif %}
+                    {% else %}
+                        {% if is_host %}
+                            <a href="{% url 'create_bill' event.id %}" 
+                               class="inline-flex items-center px-4 py-2 border border-indigo-600 text-sm font-medium rounded-md text-indigo-700 bg-indigo-50 hover:bg-indigo-100 shadow-sm">
+                               <i class="fas fa-sliders-h mr-2"></i> Create Bill
+                            </a>
+                        {% else %}
+                            <p class="text-gray-500">No bill has been created yet.</p>
+                        {% endif %}
+                    {% endif %}
+                </div>
+            {% endif %}
+
+                <!-- Participants -->
+                <div class="bg-white shadow rounded-lg p-6">
+                    <h2 class="text-xl font-semibold text-gray-900 mb-4">Participants</h2>
+                    <div class="space-y-2">
+                        {% for p in event.participation_set.all %}
+                        <div class="text-gray-800">• {{ p.user.username }}</div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+
+        <!-- Sidebar -->
+        <div class="space-y-6">
+            <!-- Host -->
+            <div class="bg-white shadow rounded-lg p-6">
+                <h2 class="text-xl font-semibold text-gray-900 mb-4">Host</h2>
+                <div class="flex items-center">
+                    <!-- <img src="/static/images/default-avatar.png" alt="{{ event.host.username }}" class="h-12 w-12 rounded-full"> -->
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-900">{{ event.host.username }}</p>
+                        <p class="text-sm text-gray-500">Host</p>
+                    </div>
+                </div>
+                {% if user == event.host and event.privacy == 'private' %}
+                    <div class="mt-4 border-t pt-4">
+                        <p class="text-sm text-gray-500 font-medium">Invitation Code:</p>
+                        <div class="mt-1 text-lg font-bold text-indigo-600 tracking-widest">
+                            {{ event.invitation_code }}
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Event Details -->
+            <div class="bg-white shadow rounded-lg p-6">
+                <h2 class="text-xl font-semibold text-gray-900 mb-4">Event Details</h2>
+                <dl class="space-y-3">
+                    <div>
+                        <dt class="text-sm font-medium text-gray-500">Privacy</dt>
+                        <dd class="mt-1 text-sm text-gray-900">
+                            {% if event.privacy == 'public' %}
+                                Public (Anyone can join)
+                            {% else %}
+                                Private (Invitation only)
+                            {% endif %}
+                        </dd>
+                    </div>
+
+                    {% if event.privacy == 'private' and not is_participant and user != event.host %}
+                    <form method="post" action="{% url 'event_detail' event.id %}">
+                        {% csrf_token %}
+                        <label for="invitation_code" class="block text-sm font-medium text-gray-700">Invitation Code</label>
+                        <input type="text" name="invitation_code" required class="border rounded px-2 py-1 w-full">
+                        <button type="submit" class="mt-2 bg-indigo-600 text-white px-4 py-2 rounded text-sm">Join</button>
+                    </form>
+                    {% endif %}
+
+                    <div>
+                        <dt class="text-sm font-medium text-gray-500">Created</dt>
+                        <dd class="mt-1 text-sm text-gray-900">{{ event.created_at|date:"F j, Y" }}</dd>
+                    </div>
+
+                    <div>
+                        <dt class="text-sm font-medium text-gray-500">Status</dt>
+                        <dd class="mt-1 text-sm text-gray-900">
+                            {% if event.status == 'active' %}
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                    Active
+                                </span>
+                            {% else %}
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                    Cancelled
+                                </span>
+                            {% endif %}
+                        </dd>
+                    </div>
+
+                    <table class="min-w-full divide-y divide-gray-200 mt-4 shadow rounded-lg overflow-hidden">
+                        <thead class="bg-indigo-50">
+                          <tr>
+                            <th class="px-6 py-3 text-left text-xs font-bold text-indigo-700 uppercase tracking-wider">Name</th>
+                            <th class="px-6 py-3 text-left text-xs font-bold text-indigo-700 uppercase tracking-wider">Dietary Preference</th>
+                          </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                          {% for participant in event.participants.all %}
+                          <tr class="hover:bg-indigo-50">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-800">{{ participant.username }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm">
+                              {% with participant.userprofile.dietary_preferences as pref %}
+                                <span class="px-3 py-1 rounded-full text-xs font-semibold
+                                  {% if pref == 'vegetarian' %} bg-green-100 text-green-800
+                                  {% elif pref == 'vegan' %} bg-red-100 text-red-800
+                                  {% elif pref == 'halal' %} bg-blue-100 text-blue-800
+                                  {% elif pref == 'kosher' %} bg-yellow-100 text-yellow-800
+                                  {% else %} bg-gray-200 text-gray-800 {% endif %}">
+                                  {{ pref|title }}
+                                </span>
+                              {% endwith %}
+                            </td>
+                          </tr>
+                          {% endfor %}
+                        </tbody>
+                      </table>
+                      
+                </dl>
+            </div>
+        </div>
+    </div>
+
+ 
+<!-- Chat Section -->
+{% if is_participant or is_host %}
+<div class="mt-8">
+<div class="bg-white shadow rounded-lg p-6 mb-6">
+    <h2 class="text-xl font-semibold text-gray-900 mb-4">Live Chat</h2>
+    <div id="chat-messages" class="h-96 overflow-y-auto mb-4 border rounded-lg p-4 bg-gray-50">
+        {% for message in event.message_set.all %}
+        <div class="mb-2">
+            <span class="font-semibold text-gray-700">{{ message.user.username }}:</span>
+            <span class="text-gray-600">{{ message.content }}</span>
+            <span class="text-xs text-gray-400 ml-2">{{ message.timestamp|date:"g:i A" }}</span>
+        </div>
+        {% endfor %}
+    </div>
+    <div class="flex">
+        <input type="text" id="chat-message-input" class="flex-1 border rounded-l-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Type your message...">
+        <button id="chat-message-submit" class="bg-indigo-600 text-white px-4 py-2 rounded-r-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            Send
+        </button>
+    </div>
+</div>
+</div>
+
+</div>
+
+
+<script>
+    const eventId = "{{ event.id }}";
+    const userId = "{{ user.id }}";
+    const username = "{{ user.username }}";
+    
+
+    const chatSocket = new WebSocket(
+    'wss://' + window.location.host + '/ws/event/' + eventId + '/'
+    );
+    
+    chatSocket.onmessage = function(e) {
+        const data = JSON.parse(e.data);
+        const chatMessages = document.querySelector('#chat-messages');
+        
+        const messageDiv = document.createElement('div');
+        messageDiv.className = 'mb-2';
+        
+        const usernameSpan = document.createElement('span');
+        usernameSpan.className = 'font-semibold text-gray-700';
+        usernameSpan.textContent = data.username + ': ';
+        
+        const contentSpan = document.createElement('span');
+        contentSpan.className = 'text-gray-600';
+        contentSpan.textContent = data.message;
+        
+        const timeSpan = document.createElement('span');
+        timeSpan.className = 'text-xs text-gray-400 ml-2';
+        timeSpan.textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        
+        messageDiv.appendChild(usernameSpan);
+        messageDiv.appendChild(contentSpan);
+        messageDiv.appendChild(timeSpan);
+        
+        chatMessages.appendChild(messageDiv);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    };
+    
+    chatSocket.onclose = function(e) {
+        console.error('Chat socket closed unexpectedly');
+    };
+    
+    document.querySelector('#chat-message-input').focus();
+    document.querySelector('#chat-message-input').onkeyup = function(e) {
+        if (e.keyCode === 13) {
+            document.querySelector('#chat-message-submit').click();
+        }
+    };
+    
+    document.querySelector('#chat-message-submit').onclick = function(e) {
+        const messageInputDom = document.querySelector('#chat-message-input');
+        const message = messageInputDom.value;
+        
+        if (message) {
+            chatSocket.send(JSON.stringify({
+                'message': message,
+                'user_id': userId
+            }));
+            messageInputDom.value = '';
+        }
+    };
+</script>
+{% endif %}
+{% endblock %}
